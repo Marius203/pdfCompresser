@@ -122,7 +122,7 @@ def get_info():
         return jsonify({
             'ghostscript_path': compressor.ghostscript_cmd,
             'quality_options': compressor.QUALITY_SETTINGS,
-            'max_file_size': '50MB'
+            'max_file_size': '100MB'
         })
     except Exception as e:
         return jsonify({'error': f'Failed to initialize compressor: {str(e)}'}), 500

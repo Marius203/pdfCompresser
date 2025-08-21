@@ -89,7 +89,7 @@ const PDFCompressor = () => {
                 });
             }, 200);
 
-            const response = await axios.post('https://pdfcompresser-production.up.railway.app/compress', formData, {
+            const response = await axios.post('https://pdfcompresser-production.up.railway.app/api/compress', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 },
