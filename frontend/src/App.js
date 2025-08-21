@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
-import { Upload, Download, RotateCcw, CheckCircle, XCircle } from 'lucide-react';
+import { Upload, FileText, Download, RotateCcw, CheckCircle, XCircle } from 'lucide-react';
 
 const PDFCompressor = () => {
     const [selectedFile, setSelectedFile] = useState(null);
@@ -89,7 +89,7 @@ const PDFCompressor = () => {
                 });
             }, 200);
 
-            const response = await axios.post('/api/compress', formData, {
+            const response = await axios.post('pdfcompresser-production.up.railway.app/compress', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 },
@@ -154,10 +154,10 @@ const PDFCompressor = () => {
                 <div
                     {...getRootProps()}
                     className={`border-3 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-300 mb-6 ${isDragActive
-                            ? 'border-blue-500 bg-blue-50'
-                            : selectedFile
-                                ? 'border-green-500 bg-green-50'
-                                : 'border-gray-300 bg-gray-50 hover:border-blue-400 hover:bg-blue-50'
+                        ? 'border-blue-500 bg-blue-50'
+                        : selectedFile
+                            ? 'border-green-500 bg-green-50'
+                            : 'border-gray-300 bg-gray-50 hover:border-blue-400 hover:bg-blue-50'
                         }`}
                 >
                     <input {...getInputProps()} />
@@ -189,8 +189,8 @@ const PDFCompressor = () => {
                                 key={option.value}
                                 onClick={() => setQuality(option.value)}
                                 className={`p-4 rounded-xl border-2 transition-all duration-200 ${quality === option.value
-                                        ? 'border-blue-500 bg-blue-500 text-white shadow-lg'
-                                        : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300'
+                                    ? 'border-blue-500 bg-blue-500 text-white shadow-lg'
+                                    : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300'
                                     }`}
                             >
                                 <div className={`w-3 h-3 rounded-full ${option.color} mx-auto mb-2`}></div>

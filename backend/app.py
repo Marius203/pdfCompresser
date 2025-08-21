@@ -17,7 +17,10 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from pdf_compressor import PDFCompressor
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for React frontend
+CORS(app, origins=[
+    'https://marius203.github.io',  # Your GitHub Pages URL
+    'http://localhost:3000'  # For local development
+])
 
 # Configuration
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 50MB max file size
