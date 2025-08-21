@@ -7,7 +7,7 @@ Provides REST API endpoints for the React frontend
 import os
 import tempfile
 import uuid
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, send_file, jsonify
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import sys
@@ -17,7 +17,10 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from pdf_compressor import PDFCompressor
 
 app = Flask(__name__)
+
+# Configure CORS to allow requests from your frontend
 CORS(app, origins=[
+    'https://accurate-forgiveness-production.up.railway.app',  # Your frontend URL
     'https://marius203.github.io',  # Your GitHub Pages URL
     'http://localhost:3000'  # For local development
 ])
@@ -130,11 +133,6 @@ def too_large(e):
     return jsonify({'error': 'File too large. Maximum size is 50MB.'}), 413
 
 if __name__ == '__main__':
-    print("Starting PDF Compressor API server...")
-    print("Frontend should be accessible at: http://localhost:3000")
-    print("API endpoints:")
-    print("  GET  /api/health - Health check")
-    print("  GET  /api/info - Compressor information")
-    print("  POST /api/compress - Compress PDF file")
-    
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    # Allow external connections
+    app.run(host='0.0.0.0', port=port, debug=False)
