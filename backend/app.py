@@ -31,17 +31,42 @@ ALLOWED_EXTENSIONS = {'pdf'}
 @app.route('/')
 def serve_react_app():
     """Serve the React app index.html"""
-    return send_from_directory(app.static_folder, 'index.html')
+    try:
+        return send_from_directory(app.static_folder, 'index.html')
+    except Exception as e:
+        return f"Error serving React app: {str(e)}", 500
 
+# Serve static files (CSS, JS, images, etc.)
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    """Serve static files from React build"""
+    try:
+        return send_from_directory(os.path.join(app.static_folder, 'static'), filename)
+    except Exception as e:
+        return f"Static file not found: {filename}", 404
+
+# Handle favicon
+@app.route('/favicon.ico')
+def favicon():
+    """Serve favicon"""
+    try:
+        return send_from_directory(app.static_folder, 'favicon.ico')
+    except Exception as e:
+        return "", 404
+
+# Catch-all route for React Router
 @app.route('/<path:path>')
 def serve_static_files(path):
     """Serve static files or React app for client-side routing"""
-    # Check if the requested file exists in the static folder
-    if os.path.exists(os.path.join(app.static_folder, path)):
-        return send_from_directory(app.static_folder, path)
-    # If file doesn't exist, serve index.html for React Router
-    else:
-        return send_from_directory(app.static_folder, 'index.html')
+    try:
+        # Check if the requested file exists in the static folder
+        if os.path.exists(os.path.join(app.static_folder, path)):
+            return send_from_directory(app.static_folder, path)
+        # If file doesn't exist, serve index.html for React Router
+        else:
+            return send_from_directory(app.static_folder, 'index.html')
+    except Exception as e:
+        return f"Error serving file: {str(e)}", 404
 
 def allowed_file(filename):
     """Check if file has allowed extension."""
@@ -139,6 +164,24 @@ def get_info():
         })
     except Exception as e:
         return jsonify({'error': f'Failed to initialize compressor: {str(e)}'}), 500
+
+# Add this route after your existing routes for debugging
+@app.route('/api/debug', methods=['GET'])
+def debug_files():
+    """Debug endpoint to check if build files exist"""
+    try:
+        build_path = app.static_folder
+        if os.path.exists(build_path):
+            files = os.listdir(build_path)
+            return jsonify({
+                'build_path': build_path,
+                'files': files,
+                'static_exists': os.path.exists(os.path.join(build_path, 'static'))
+            })
+        else:
+            return jsonify({'error': 'Build folder does not exist', 'path': build_path})
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
 @app.errorhandler(413)
 def too_large(e):

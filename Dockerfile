@@ -12,7 +12,7 @@ RUN npm install
 # Copy frontend source code
 COPY frontend/ ./
 
-# Build the React app
+# Build the React app for production
 RUN npm run build
 
 # Second stage: Python backend with React build
@@ -37,6 +37,9 @@ COPY requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Debug: List contents to verify build files
+RUN ls -la /app/frontend/build/
 
 # Change to backend directory
 WORKDIR /app/backend
