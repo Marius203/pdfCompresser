@@ -89,31 +89,33 @@ const PDFCompressor = () => {
                 });
             }, 200);
 
+            // TEMPORARY: Comment out the API call for now
+            /*
             const response = await axios.post('https://pdfcompresser-production.up.railway.app/api/compress', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 },
                 responseType: 'blob'
             });
+            */
+
+            // Simulate a successful response for testing
+            await new Promise(resolve => setTimeout(resolve, 2000));
 
             clearInterval(progressInterval);
             setProgress(100);
 
-            // Get compression stats from response headers
-            const originalSize = parseInt(response.headers['x-original-size'] || selectedFile.size);
-            const compressedSize = response.data.size;
-            const compressionRatio = ((originalSize - compressedSize) / originalSize * 100).toFixed(1);
-
+            // Mock result for testing UI
             setResult({
-                blob: response.data,
-                originalSize,
-                compressedSize,
-                compressionRatio,
+                blob: new Blob(['fake data']),
+                originalSize: selectedFile.size,
+                compressedSize: Math.floor(selectedFile.size * 0.7),
+                compressionRatio: '30.0',
                 filename: selectedFile.name.replace('.pdf', '_compressed.pdf')
             });
 
         } catch (err) {
-            setError(err.response?.data?.error || 'Compression failed. Please try again.');
+            setError('Compression failed. Please try again.');
         } finally {
             setIsCompressing(false);
         }
