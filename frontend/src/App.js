@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
+import axios from 'axios'
 import { Upload, Download, RotateCcw, CheckCircle, XCircle } from 'lucide-react';
 
 const PDFCompressor = () => {
@@ -88,33 +89,32 @@ const PDFCompressor = () => {
                 });
             }, 200);
 
-            // TEMPORARY: Comment out the API call for now
-            /*
-            const response = await axios.post('https://pdfcompresser-production.up.railway.app/api/compress', formData, {
+            const response = await axios.post('/api/compress', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 },
                 responseType: 'blob'
             });
-            */
-
-            // Simulate a successful response for testing
-            await new Promise(resolve => setTimeout(resolve, 2000));
 
             clearInterval(progressInterval);
             setProgress(100);
 
-            // Mock result for testing UI
+            // Get compression info from response headers
+            const originalSize = parseInt(response.headers['x-original-size']);
+            const compressedSize = parseInt(response.headers['x-compressed-size']);
+            const compressionRatio = response.headers['x-compression-ratio'];
+
             setResult({
-                blob: new Blob(['fake data']),
-                originalSize: selectedFile.size,
-                compressedSize: Math.floor(selectedFile.size * 0.7),
-                compressionRatio: '30.0',
+                blob: response.data,
+                originalSize: originalSize,
+                compressedSize: compressedSize,
+                compressionRatio: compressionRatio,
                 filename: selectedFile.name.replace('.pdf', '_compressed.pdf')
             });
 
         } catch (err) {
-            setError('Compression failed. Please try again.');
+            console.error('Compression error:', err);
+            setError(err.response?.data?.error || 'Compression failed. Please try again.');
         } finally {
             setIsCompressing(false);
         }

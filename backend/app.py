@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
 Flask API server for PDF compression
-Provides REST API endpoints for the React frontend
+Provides REST API endpoints and serves React frontend
 """
 
 import os
 import tempfile
 import uuid
-from flask import Flask, request, send_file, jsonify
+from flask import Flask, request, send_file, jsonify, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import sys
@@ -16,19 +16,32 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from pdf_compressor import PDFCompressor
 
-app = Flask(__name__)
+# Set static folder to point to React build
+app = Flask(__name__, static_folder='../frontend/build', static_url_path='')
 
 # Configure CORS to allow requests from your frontend
-CORS(app, origins=[
-    'https://accurate-forgiveness-production.up.railway.app',  # Your frontend URL
-    'https://marius203.github.io',  # Your GitHub Pages URL
-    'http://localhost:3000'  # For local development
-])
+CORS(app)
 
 # Configuration
-app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 50MB max file size
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max file size
 UPLOAD_FOLDER = tempfile.gettempdir()
 ALLOWED_EXTENSIONS = {'pdf'}
+
+# Serve React App
+@app.route('/')
+def serve_react_app():
+    """Serve the React app index.html"""
+    return send_from_directory(app.static_folder, 'index.html')
+
+@app.route('/<path:path>')
+def serve_static_files(path):
+    """Serve static files or React app for client-side routing"""
+    # Check if the requested file exists in the static folder
+    if os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    # If file doesn't exist, serve index.html for React Router
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
 
 def allowed_file(filename):
     """Check if file has allowed extension."""
@@ -130,9 +143,8 @@ def get_info():
 @app.errorhandler(413)
 def too_large(e):
     """Handle file too large error."""
-    return jsonify({'error': 'File too large. Maximum size is 50MB.'}), 413
+    return jsonify({'error': 'File too large. Maximum size is 100MB.'}), 413
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    # Allow external connections
     app.run(host='0.0.0.0', port=port, debug=False)
