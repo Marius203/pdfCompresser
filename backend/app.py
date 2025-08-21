@@ -5,12 +5,12 @@ Provides REST API endpoints and serves React frontend
 """
 
 import os
+import sys
 import tempfile
 import uuid
 from flask import Flask, request, send_file, jsonify, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
-import sys
 
 # Add the current directory to Python path to import pdf_compressor
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -62,7 +62,6 @@ def serve_static_files(path):
         # Check if the requested file exists in the static folder
         if os.path.exists(os.path.join(app.static_folder, path)):
             return send_from_directory(app.static_folder, path)
-        # If file doesn't exist, serve index.html for React Router
         else:
             return send_from_directory(app.static_folder, 'index.html')
     except Exception as e:
