@@ -1,6 +1,5 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import axios from 'axios';
 import { Upload, Download, RotateCcw, CheckCircle, XCircle } from 'lucide-react';
 
 const PDFCompressor = () => {
