@@ -38,11 +38,15 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Debug: Check if files are copied correctly
+RUN ls -la /app/backend/
+RUN ls -la /app/frontend/build/
+
 # Change to backend directory
 WORKDIR /app/backend
 
 # Expose port
 EXPOSE 5000
 
-# Use Gunicorn for production with optimized settings
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--worker-class", "sync", "--timeout", "300", "--keep-alive", "2", "--max-requests", "1000", "--max-requests-jitter", "100", "wsgi:app"]
+# Use Gunicorn for production with logging
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--timeout", "300", "--log-level", "info", "--access-logfile", "-", "--error-logfile", "-", "wsgi:app"]
