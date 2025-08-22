@@ -3,50 +3,81 @@ FROM node:18-slim AS frontend-build
 
 WORKDIR /app/frontend
 
-# Copy frontend package files
+# Copy package files first for better caching
 COPY frontend/package*.json ./
 
-# Install frontend dependencies
-RUN npm install
+# Install dependencies
+RUN npm ci --only=production
 
-# Copy frontend source code
+# Copy source code
 COPY frontend/ ./
 
-# Build the React app for production
-RUN npm run build
+# Build with error handling
+RUN npm run build && \
+    test -f build/index.html || (echo "React build failed" && exit 1)
 
-# Second stage: Python backend with React build
-FROM python:3.10-slim
+# Second stage: Python backend
+FROM python:3.10-slim AS production
 
-# Install system dependencies including Ghostscript
+# Create non-root user for security
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     ghostscript \
-    && rm -rf /var/lib/apt/lists/*
+    --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/* && \
+    apt-get clean
 
 # Set working directory
 WORKDIR /app
 
+# Copy requirements first for better caching
+COPY requirements.txt .
+
+# Install Python dependencies with error handling
+RUN pip install --no-cache-dir -r requirements.txt && \
+    python -c "import flask, flask_cors; print('Dependencies OK')"
+
 # Copy backend files
 COPY backend/ ./backend/
 
-# Copy the React build from the previous stage
+# Copy React build from previous stage
 COPY --from=frontend-build /app/frontend/build ./frontend/build
 
-# Copy requirements file
-COPY requirements.txt .
+# Verify critical files exist
+RUN test -f backend/app.py || (echo "app.py missing" && exit 1) && \
+    test -f backend/wsgi.py || (echo "wsgi.py missing" && exit 1) && \
+    test -f frontend/build/index.html || (echo "React build missing" && exit 1)
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Set ownership to non-root user
+RUN chown -R appuser:appuser /app
 
-# Debug: Check if files are copied correctly
-RUN ls -la /app/backend/
-RUN ls -la /app/frontend/build/
+# Switch to non-root user
+USER appuser
 
 # Change to backend directory
 WORKDIR /app/backend
 
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD python -c "import requests; requests.get('http://localhost:5000/api/health', timeout=5)" || exit 1
+
 # Expose port
 EXPOSE 5000
 
-# Use Gunicorn for production with logging
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--timeout", "300", "--log-level", "info", "--access-logfile", "-", "--error-logfile", "-", "wsgi:app"]
+# Production Gunicorn configuration
+CMD ["gunicorn", \
+     "--bind", "0.0.0.0:5000", \
+     "--workers", "2", \
+     "--worker-class", "sync", \
+     "--worker-connections", "1000", \
+     "--timeout", "120", \
+     "--keepalive", "2", \
+     "--max-requests", "1000", \
+     "--max-requests-jitter", "100", \
+     "--preload", \
+     "--log-level", "info", \
+     "--access-logfile", "-", \
+     "--error-logfile", "-", \
+     "wsgi:app"]

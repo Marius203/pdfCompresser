@@ -23,7 +23,12 @@ app = Flask(__name__, static_folder='../frontend/build', static_url_path='')
 CORS(app)
 
 # Configuration
-app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max file size
+class Config:
+    MAX_CONTENT_LENGTH = int(os.environ.get('MAX_FILE_SIZE', 100 * 1024 * 1024))  # 100MB max file size
+    WORKER_TIMEOUT = int(os.environ.get('WORKER_TIMEOUT', 120))
+
+app.config.from_object(Config)
+
 UPLOAD_FOLDER = tempfile.gettempdir()
 ALLOWED_EXTENSIONS = {'pdf'}
 
